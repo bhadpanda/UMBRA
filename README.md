@@ -15,7 +15,7 @@
 ## 🔧 Installation  
 
 ```bash
-git clone https://github.com/your-username/UMBRA.git
+git clone https://github.com/Abdul-Rahman-Ammourah/UMBRA.git
 cd UMBRA
 chmod +x umbra.sh
 ./umbra.sh
