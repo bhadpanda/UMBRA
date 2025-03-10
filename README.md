@@ -20,3 +20,14 @@ cd UMBRA
 chmod +x umbra.sh
 ./umbra.sh
 ```
+
+## 📌 Use Cases
+- 🛡️ Penetration Testing – Generate smarter password lists for ethical hacking and security assessments.
+- 📢 Cybersecurity Awareness – Demonstrate how easily weak passwords can be guessed.
+- 🔑 Personal Security – Assist users in strengthening their password habits.
+
+## ⚠️ Disclaimer
+UMBRA is intended for educational and ethical cybersecurity purposes only. Misuse of this tool for unauthorized access or malicious activities is strictly prohibited.
+
+## 📜 License
+This project is licensed under the MIT License – see the LICENSE file for details.
