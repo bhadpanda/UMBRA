@@ -1,0 +1,16 @@
+AI : 
+	1-Deepseek
+
+Web Scraping: 
+	
+	1- Scrapy – Large-scale, automated web scraping
+
+	2- Playwright – Scraping dynamic JavaScript-heavy sites
+
+	3- theHarvester – Quick reconnaissance (emails, domains, usernames)
+	
+
+Language: Python 
+
+Platform: Linux
+
