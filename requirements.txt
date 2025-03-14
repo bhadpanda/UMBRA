@@ -1,16 +1,18 @@
-AI : 
-	1-Deepseek
+# OSINT Tools
+scrapy>=2.11.0          # Web scraping framework
+playwright>=1.40.0      # Browser automation
+theharvester>=4.0.0     # OSINT data gathering
 
-Web Scraping: 
-	
-	1- Scrapy – Large-scale, automated web scraping
+# AI Integration
+requests>=2.31.0        # For making API calls to DeepSeek-Coder
 
-	2- Playwright – Scraping dynamic JavaScript-heavy sites
+# Password Generation and Evaluation
+zxcvbn>=4.4.28          # Password strength evaluation
 
-	3- theHarvester – Quick reconnaissance (emails, domains, usernames)
-	
+# GUI Frameworks
+## tkinter is built-in, so no need to include it in requirements.txt
 
-Language: Python 
-
-Platform: Linux
-
+# Utilities
+python-dotenv>=1.0.0    # For managing environment variables
+## argparse is built-in, so no need to include it in requirements.txt
+pytest>=7.4.0           # For writing and running tests
