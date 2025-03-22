@@ -2,6 +2,7 @@
 scrapy>=2.11.0          # Web scraping framework
 playwright>=1.40.0      # Browser automation
 theharvester>=4.0.0     # OSINT data gathering
+spyse-python            # OSINT data gathering ALT ??
 
 # AI Integration
 requests>=2.31.0        # For making API calls to DeepSeek-Coder
