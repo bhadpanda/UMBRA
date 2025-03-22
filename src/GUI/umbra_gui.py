@@ -1,3 +1,5 @@
+# umrba_gui.py
+
 import sys
 import random
 import string
@@ -769,9 +771,6 @@ Password suggestions:
         variety = sum([has_lower, has_upper, has_digit, has_symbol])
         strength += variety * 10
         
-        # Cap at 100  has_upper, has_digit, has_symbol])
-        strength += variety * 10
-        
         # Cap at 100
         return min(100, strength)
     
@@ -847,9 +846,3 @@ Password suggestions:
         display.clear()
         for i, suggestion in enumerate(suggestions, 1):
             display.append(f"{i}. {suggestion}")
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = UMRBAMainWindow()
-    window.show()
-    sys.exit(app.exec_())

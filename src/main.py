@@ -1,30 +1,62 @@
-#This file is the main entry point for the UMBRA tool
-#Contains the command line interface
 import argparse
+import sys
+from PyQt5.QtWidgets import QApplication
+from password_gen.password_gen import password_generator
+from password_sug.password_sug import password_suggestor
+from GUI.umbra_gui import UMRBAMainWindow
 
-def main():
-    parser = argparse.ArgumentParser(description="UMBRA: Password Security Tool")
-    parser.add_argument("--target", help="Target email or username")
-    parser.add_argument("--osint", action="store_true", help="Gather OSINT data")
-    parser.add_argument("--generate-list", action="store_true", help="Generate password list")
-    parser.add_argument("--suggest-password", action="store_true", help="Suggest a secure password")
-    args = parser.parse_args()
+def print_logo():
+    logo = r"""
+██    ██ ███    ███ ██████  ██████   █████  
+██    ██ ████  ████ ██   ██ ██   ██ ██   ██ 
+██    ██ ██ ████ ██ ██████  ██████  ███████ 
+██    ██ ██  ██  ██ ██      ██   ██ ██   ██ 
+ ██████  ██      ██ ██      ██   ██ ██   ██ 
+                                            
+       UMBRA - Password Security Tool
+    """
+    print(logo)
 
-    if args.osint:
-        # Call OSINT module
-        pass
-    if args.generate_list:
-        # Call password generation module
-        pass
-    if args.suggest_password:
-        # Call password suggestion module
-        pass
+def generate_password_list():
+    print("[SYSTEM] Generating password list...")
+    password_generator()
+    
+def suggest_password():
+    print("[SYSTEM] Suggesting a secure password...")
+    password_suggestor()
+def launch_gui():
+    print("[SYSTEM] Launching GUI...")
+    app = QApplication(sys.argv)
+    window = UMRBAMainWindow()
+    window.show()
+    sys.exit(app.exec_())
+def interactive_mode():
+    print("[SYSTEM] UMBRA Interactive Mode Activated.")
+    while True:
+        command = input("\n[UMBRA] >> ").strip().lower()
+        
+        if command == "generate":
+            generate_password_list()
+        elif command == "gui":
+            launch_gui()
+        elif command == "suggest":
+            suggest_password()
+        elif command == "exit":
+            print("[SYSTEM] Exiting UMBRA. Stay safe!")
+            break
+        else:
+            print("[ERROR] Unknown command. Type 'generate', 'suggest', or 'exit'.")
 
 if __name__ == "__main__":
-    print("UMRBA Terminal v1.0\n"
-         "Copyright (c) 2025 UMRBA Systems\n\n"
-         "[SYSTEM] Initializing password systems...\n"
-         "[SYSTEM] Establishing secure environment...\n"
-         "[SYSTEM] All systems operational.\n\n"
-         "Type help for available commands.\n")
-    main()
+    print_logo()
+    print("UMBRA Terminal v1.0\n"
+          "Copyright (c) 2025 UMBRA Systems\n\n"
+          "[SYSTEM] Initializing password systems...\n"
+          "[SYSTEM] Establishing secure environment...\n"
+          "[SYSTEM] All systems operational.\n\n"
+          "Type 'gui' to launch the GUI.\n"
+          "Type 'generate' to create a password list.\n"
+          "Type 'suggest' to get a secure password.\n"
+          "Type 'exit' to quit the program.\n")
+
+    interactive_mode()
