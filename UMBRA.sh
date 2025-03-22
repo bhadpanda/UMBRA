@@ -6,7 +6,7 @@ set -e
 # Variables
 VENV_DIR="venv"
 REQUIREMENTS_FILE="requirements.txt"
-SETUP_PY="setup.py"
+MAIN_PY="src\main.py"
 
 # Check if Python 3 is installed
 if ! command -v python3 &> /dev/null; then
@@ -32,16 +32,16 @@ if [ -f "$REQUIREMENTS_FILE" ]; then
     echo "Installing dependencies from $REQUIREMENTS_FILE..."
     pip install -r $REQUIREMENTS_FILE
 else
-    echo "Error: $REQUIREMENTS_FILE not found."
+    echo "Error: $REQUIREMENTS_FILE not found."cls
     exit 1
 fi
 
 # Run setup.py (if it exists)
-if [ -f "$SETUP_PY" ]; then
-    echo "Running setup.py..."
-    python $SETUP_PY
+if [ -f "$SMAIN_PY" ]; then
+    echo "Running main.py..."
+    python $MAIN_PY
 else
-    echo "No setup.py found. Skipping."
+    echo "No main.py found. Skipping."
 fi
 
 echo "Setup complete! Virtual environment is ready to use."
