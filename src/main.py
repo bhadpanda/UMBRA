@@ -1,4 +1,3 @@
-import argparse
 import sys
 from PyQt5.QtWidgets import QApplication
 from password_gen.password_gen import password_generator
