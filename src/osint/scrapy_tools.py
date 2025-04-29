@@ -5,8 +5,36 @@ from datetime import datetime
 import json
 import re
 import argparse
+from scrapy.exceptions import DropItem
 
 OUTPUT_FILE = "umbra_output.json"
+
+class DuplicatesPipeline:
+    def __init__(self):
+        self.seen = set()
+
+    def process_item(self, item, spider):
+        key = item.get("url")
+        if key in self.seen:
+            raise DropItem("Duplicate item found: %s" % item)
+        self.seen.add(key)
+        return item
+
+def validate_query(email=None, username=None, fullname=None):
+    if email:
+        pattern = r'^[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+\.[A-Za-z0-9-.]+$'
+        if not re.match(pattern, email):
+            raise ValueError("Invalid email format")
+    elif username:
+        pattern = r'^[A-Za-z0-9_.-]+$'
+        if not re.match(pattern, username):
+            raise ValueError("Invalid username format")
+    elif fullname:
+        pattern = r'^[A-Za-z ]+$'
+        if not re.match(pattern, fullname.strip()):
+            raise ValueError("Invalid fullname")
+    else:
+        raise ValueError("No input provided")
 
 class UmbraSpider(scrapy.Spider):
     name = "umbra"
@@ -15,14 +43,19 @@ class UmbraSpider(scrapy.Spider):
         "USER_AGENT": "Mozilla/5.0",
         "LOG_LEVEL": "ERROR",
         "RETRY_ENABLED": True,
-        "RETRY_TIMES": 2,
-        "DOWNLOAD_TIMEOUT": 20,
+        "RETRY_TIMES": 3,
+        "DOWNLOAD_TIMEOUT": 15,
         "COOKIES_ENABLED": False,
-        "ROBOTSTXT_OBEY": False
+        "ROBOTSTXT_OBEY": False,
+        "AUTOTHROTTLE_ENABLED": True,
+        "ITEM_PIPELINES": {
+            '__main__.DuplicatesPipeline': 100
+        }
     }
 
     def __init__(self, email=None, username=None, fullname=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        validate_query(email=email, username=username, fullname=fullname)
         self.email = email
         self.username = username
         self.fullname = fullname
@@ -51,10 +84,6 @@ class UmbraSpider(scrapy.Spider):
             ]
 
         elif self.email:
-            if not re.match(r"[^@]+@[^@]+\.[^@]+", self.email):
-                self.logger.error("Invalid email format.")
-                return []
-
             query_sites = [
                 "pastebin.com", "haveibeenpwned.com", "dehashed.com",
                 "twitter.com", "github.com", "facebook.com", "youtube.com"
@@ -78,8 +107,16 @@ class UmbraSpider(scrapy.Spider):
 
         return urls
 
+    def start_requests(self):
+        for url in self.start_urls:
+            yield scrapy.Request(url, callback=self.parse, errback=self.errback_handler)
+
+    def errback_handler(self, failure):
+        self.logger.error(f"Request failed: {failure}")
+
     def parse(self, response):
-        print(f"\U0001f6f8 Scanning: {response.url} (Status: {response.status})")
+        if "profile not found" in response.text.lower() or len(response.text) < 100:
+            return
 
         title = response.css("title::text").get(default="N/A")
         text = " ".join(response.css("body *::text").getall()).lower()
@@ -95,20 +132,22 @@ class UmbraSpider(scrapy.Spider):
             age_match = re.search(r"(\d{1,2})\s?(?:y/?o|years?\s?old|yrs)", text)
             if age_match:
                 age = age_match.group(1)
-            birth_year_match = re.search(r"born\s?(in\s)?(19\d{2}|20[0-2]\d)", text)
-            if not age and birth_year_match:
-                age = str(datetime.now().year - int(birth_year_match.group(2)))
+            else:
+                birth_year_match = re.search(r"born\s?(in\s)?(19\d{2}|20[0-2]\d)", text)
+                if birth_year_match:
+                    birth_year = int(birth_year_match.group(2))
+                    age = str(datetime.now().year - birth_year)
             if age:
                 result["inferred_age"] = age
         except Exception as e:
-            print("⚠️ Age detection failed:", e)
+            self.logger.warning(f"Failed to parse age: {e}")
 
         try:
             location_match = re.search(r"(?:lives in|based in|from|resides in)\s+([a-zA-Z\s,]+)", text)
             if location_match:
                 result["inferred_location"] = location_match.group(1).strip()
         except Exception as e:
-            print("⚠️ Location detection failed:", e)
+            self.logger.warning(f"Location detection failed: {e}")
 
         try:
             hobby_keywords = {
@@ -122,24 +161,19 @@ class UmbraSpider(scrapy.Spider):
                 "traveling": ["travel", "wanderlust", "vacation", "backpacking"]
             }
 
-            hobbies_found = []
-            for hobby, keywords in hobby_keywords.items():
-                if any(word in text for word in keywords):
-                    hobbies_found.append(hobby)
+            hobbies_found = [hobby for hobby, keys in hobby_keywords.items() if any(k in text for k in keys)]
             if hobbies_found:
                 result["inferred_hobbies"] = hobbies_found
         except Exception as e:
-            print("⚠️ Hobby detection failed:", e)
+            self.logger.warning(f"Hobby detection failed: {e}")
 
-        print(json.dumps(result, indent=2))
         self.collected_results.append(result)
         yield result
 
     def closed(self, reason):
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
             json.dump(self.collected_results, f, indent=2)
-        print(f"\n🔍 All results saved to: {OUTPUT_FILE}\n")
-
+        self.logger.info(f"All results saved to: {OUTPUT_FILE}")
 
 def run_cli():
     parser = argparse.ArgumentParser(description="UMBRA OSINT Scanner")
@@ -149,17 +183,14 @@ def run_cli():
     group.add_argument("--fullname", help="Target's full name")
     args = parser.parse_args()
 
+    validate_query(email=args.email, username=args.username, fullname=args.fullname)
+
     print(f"Running OSINT scan on: {{'username': args.username, 'email': args.email, 'fullname': args.fullname}}")
     configure_logging({'LOG_FORMAT': '%(levelname)s: %(message)s'})
     process = CrawlerProcess()
-    process.crawl(
-        UmbraSpider,
-        email=args.email,
-        username=args.username,
-        fullname=args.fullname
-    )
+    process.crawl(UmbraSpider, email=args.email, username=args.username, fullname=args.fullname)
     process.start()
 
-
 if __name__ == "__main__":
-    run_cli()
+     run_cli()
+    
